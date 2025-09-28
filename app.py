@@ -46,7 +46,7 @@ st.markdown(
 
     /* full-width predict button */
     section[data-testid="stSidebar"] div.stButton > button {
-        width:100%; height:46px; font-size:15px; border-radius:8px;
+        width:350%; height:46px; font-size:15px; border-radius:8px;
     }
 
     /* result card styling + make card a fixed min-height so it looks like one single container */
@@ -56,7 +56,7 @@ st.markdown(
     padding: 18px;
     box-shadow: 0 6px 20px rgba(0,0,0,0.28);
     color: #e6eef6;
-    /* min-height: 520px;  <-- REMOVE this */
+     min-height: 520px; 
 }
 
     .result-card h3 { margin: 0 0 8px 0; }
