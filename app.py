@@ -39,7 +39,17 @@ st.markdown(
     /* Wider sidebar */
     section[data-testid="stSidebar"] { width: 420px !important; }
 
-    /* Make the primary button full width inside sidebar */
+    /* Make all inputs the same width */
+    .stNumberInput, .stSelectbox {
+        width: 100% !important;
+    }
+
+    /* Fix padding inside inputs */
+    div[data-baseweb="input"] > div {
+        width: 100% !important;
+    }
+
+    /* Full-width button */
     div.stButton > button {
         width: 100%;
         height: 46px;
@@ -53,17 +63,12 @@ st.markdown(
         overflow-y: auto;
         padding-right: 12px;
     }
-
-    /* Small spacing adjustments for result box */
-    .result-box {
-        padding: 12px;
-    }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-# ---------- Sidebar: Patient Input (2 columns per row) ----------
+# ---------- Sidebar: Patient Input (2 columns per row, aligned) ----------
 st.sidebar.header("Patient Input")
 
 c1, c2 = st.sidebar.columns(2)
@@ -107,7 +112,7 @@ thal = st.sidebar.number_input("Thalassemia (thal)", min_value=0, max_value=3, v
 st.sidebar.markdown("---")
 st.sidebar.caption("Tip: provide sensible ranges for reliable predictions")
 
-# ---------- Prediction logic placed in session state so result persists ----------
+# ---------- Prediction logic ----------
 def do_predict():
     x = np.array([[age, sex, cp, trestbps, chol, fbs, restecg,
                    thalach, exang, oldpeak, slope, ca, thal]])
@@ -122,16 +127,14 @@ def do_predict():
     except Exception as e:
         st.session_state["prediction_error"] = str(e)
 
-# Put button in sidebar and use on_click callback
 st.sidebar.button("🔍 Predict", on_click=do_predict)
 
 # ---------- Main layout ----------
 st.title("Heart Disease Predictor (Streamlit)")
 
-# Prepare layout: left = charts, right = result card
 main_col, result_col = st.columns([3, 1])
 
-# Result card on the right column (shows last prediction)
+# Result card on the right column
 with result_col:
     st.markdown("### 🩺 Prediction Result")
     if "prediction_error" in st.session_state:
@@ -150,32 +153,28 @@ with result_col:
     else:
         st.info("No prediction yet. Enter inputs in the sidebar and click Predict.")
 
-# Charts in left/main column, placed inside a scrollable container
+# Charts in left/main column
 with main_col:
-    st.markdown("## Exploratory Visuals (scrollable)")
+    st.markdown("## Exploratory Visuals")
     st.markdown('<div class="scroll-container">', unsafe_allow_html=True)
 
     if df is not None:
-        # Chart 1: distribution
         st.write("Distribution of heart disease cases")
         fig1, ax1 = plt.subplots(figsize=(6, 4))
         sns.countplot(x="target", data=df, palette="coolwarm", ax=ax1)
         ax1.set_xlabel("Heart Disease (1 = Yes, 0 = No)")
         st.pyplot(fig1, clear_figure=True)
 
-        # Chart 2: Age vs Cholesterol
         st.write("Age vs Cholesterol")
         fig2, ax2 = plt.subplots(figsize=(7, 4))
         sns.scatterplot(x="age", y="chol", hue="target", data=df, palette="coolwarm", ax=ax2)
         st.pyplot(fig2, clear_figure=True)
 
-        # Chart 3: Cholesterol boxplot
         st.write("Cholesterol by Heart Disease (boxplot)")
         fig3, ax3 = plt.subplots(figsize=(7, 4))
         sns.boxplot(x="target", y="chol", data=df, palette="Set2", ax=ax3)
         st.pyplot(fig3, clear_figure=True)
 
-        # Chart 4: Resting BP distribution
         st.write("Resting blood pressure distribution")
         fig4, ax4 = plt.subplots(figsize=(7, 4))
         sns.histplot(df["trestbps"], bins=30, kde=True, ax=ax4)
