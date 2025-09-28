@@ -1,12 +1,3 @@
-# app.py
-import streamlit as st
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-from joblib import load
-from pathlib import Path
-
 # ---------- Main layout: 3-column with margins ----------
 st.title("Heart Disease Predictor (Streamlit)")
 
@@ -83,4 +74,3 @@ with main_col:
         st.info("Dataset `heart.csv` not found — upload it to enable visuals.")
 
     st.markdown("</div>", unsafe_allow_html=True)
-
