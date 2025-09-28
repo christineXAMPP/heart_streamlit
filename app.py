@@ -127,4 +127,29 @@ st.title("Heart Disease Predictor (Streamlit)")
 
 if df is not None:
     st.markdown("### Exploratory Visuals (scrollable)")
-    st.markdown('<div class
+    st.markdown('<div class="scroll-container">', unsafe_allow_html=True)
+
+    st.write("Distribution of heart disease cases")
+    fig1, ax1 = plt.subplots(figsize=(6, 4))
+    sns.countplot(x='target', data=df, palette='coolwarm', ax=ax1)
+    ax1.set_xlabel("Heart Disease (1=Yes, 0=No)")
+    st.pyplot(fig1)
+
+    st.write("Age vs Cholesterol")
+    fig2, ax2 = plt.subplots(figsize=(7, 5))
+    sns.scatterplot(x='age', y='chol', hue='target', data=df, palette='coolwarm', ax=ax2)
+    st.pyplot(fig2)
+
+    st.write("Cholesterol by Heart Disease (boxplot)")
+    fig3, ax3 = plt.subplots(figsize=(7, 5))
+    sns.boxplot(x='target', y='chol', data=df, palette='Set2', ax=ax3)
+    st.pyplot(fig3)
+
+    st.write("Resting blood pressure distribution")
+    fig4, ax4 = plt.subplots(figsize=(7, 5))
+    sns.histplot(df['trestbps'], bins=30, kde=True, ax=ax4)
+    st.pyplot(fig4)
+
+    st.markdown('</div>', unsafe_allow_html=True)
+else:
+    st.info("Dataset `heart.csv` not found — upload it for visuals.")
