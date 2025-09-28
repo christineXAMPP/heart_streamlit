@@ -51,13 +51,14 @@ st.markdown(
 
     /* result card styling + make card a fixed min-height so it looks like one single container */
     .result-card {
-        background: linear-gradient(180deg,#0f1720 0%, #091018 100%);
-        border-radius: 12px;
-        padding: 18px;
-        box-shadow: 0 6px 20px rgba(0,0,0,0.28);
-        color: #e6eef6;
-        min-height: 520px; /* controls visual height of the card */
-    }
+    background: linear-gradient(180deg,#0f1720 0%, #091018 100%);
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.28);
+    color: #e6eef6;
+    /* min-height: 520px;  <-- REMOVE this */
+}
+
     .result-card h3 { margin: 0 0 8px 0; }
     .result-status { font-size:1.05rem; margin-bottom:6px; }
     .result-confidence { margin-top:10px; }
@@ -148,31 +149,39 @@ st.title("Heart Disease Predictor (Streamlit)")
 # Create 3 columns: left spacer, main (centered), right result card
 left_spacer, main_col, right_col = st.columns([0.2, 2.6, 0.9])
 
-# Right: unified result container (one single card)
 with right_col:
-    # open card
-    st.markdown('<div class="result-card">', unsafe_allow_html=True)
+    with st.container():
+        st.markdown('<div class="result-card">', unsafe_allow_html=True)
 
-    # content INSIDE the card
-    st.markdown("<h3>🩺 Prediction Result</h3>", unsafe_allow_html=True)
-    if "prediction_error" in st.session_state:
-        st.error(f"Prediction error: {st.session_state.pop('prediction_error')}")
-    elif "prediction" in st.session_state:
-        p = st.session_state["prediction"]
-        conf = st.session_state.get("confidence", None)
-        if p == "Heart Disease":
-            st.markdown(f'<div class="result-status"><strong style="color:#ffb4b4">⚠️ {p}</strong></div>', unsafe_allow_html=True)
+        st.markdown("<h3>🩺 Prediction Result</h3>", unsafe_allow_html=True)
+        if "prediction_error" in st.session_state:
+            st.error(f"Prediction error: {st.session_state.pop('prediction_error')}")
+        elif "prediction" in st.session_state:
+            p = st.session_state["prediction"]
+            conf = st.session_state.get("confidence", None)
+            if p == "Heart Disease":
+                st.markdown(
+                    f'<div class="result-status"><strong style="color:#ffb4b4">⚠️ {p}</strong></div>',
+                    unsafe_allow_html=True,
+                )
+            else:
+                st.markdown(
+                    f'<div class="result-status"><strong style="color:#9be7a2">✅ {p}</strong></div>',
+                    unsafe_allow_html=True,
+                )
+            if conf is not None:
+                st.markdown(
+                    f'<div class="result-confidence">Confidence: <strong>{conf:.1f}%</strong></div>',
+                    unsafe_allow_html=True,
+                )
+            st.markdown("<hr>", unsafe_allow_html=True)
+            st.caption(
+                "Feature order: age, sex, cp, trestbps, chol, fbs, restecg, thalach, exang, oldpeak, slope, ca, thal"
+            )
         else:
-            st.markdown(f'<div class="result-status"><strong style="color:#9be7a2">✅ {p}</strong></div>', unsafe_allow_html=True)
-        if conf is not None:
-            st.markdown(f'<div class="result-confidence">Confidence: <strong>{conf:.1f}%</strong></div>', unsafe_allow_html=True)
-        st.markdown("<hr>", unsafe_allow_html=True)
-        st.caption("Feature order: age, sex, cp, trestbps, chol, fbs, restecg, thalach, exang, oldpeak, slope, ca, thal")
-    else:
-        st.info("No prediction yet. Use the sidebar inputs and click Predict.")
+            st.info("No prediction yet. Use the sidebar inputs and click Predict.")
 
-    # close card
-    st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
 
 # Main: center charts in a 2x2 grid with margins
