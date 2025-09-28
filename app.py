@@ -150,7 +150,7 @@ left_spacer, main_col, right_col = st.columns([0.2, 2.6, 0.9])
 
 # Right: unified result container (one single card)
 with right_col:
-    st.markdown('<div class="result-card">', unsafe_allow_html=True)
+   
     st.markdown("<h3>🩺 Prediction Result</h3>", unsafe_allow_html=True)
     if "prediction_error" in st.session_state:
         st.error(f"Prediction error: {st.session_state.pop('prediction_error')}")
