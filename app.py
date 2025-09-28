@@ -51,7 +51,7 @@ st.markdown(
 
     /* Full-width button */
     div.stButton > button {
-        width: 100%;
+        width: 200%;
         height: 46px;
         font-size: 15px;
         border-radius: 8px;
