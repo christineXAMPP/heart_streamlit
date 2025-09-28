@@ -13,19 +13,16 @@ st.set_page_config(page_title="Heart Disease Predictor", layout="wide")
 # ---------- Load artifacts ----------
 @st.cache_resource
 def load_artifacts():
-    model = None
-    scaler = None
-    df = None
     base = Path(__file__).parent
     try:
         model = load(base / "model_knn.joblib")
     except Exception:
-        st.error("Model file not found. Upload `model_knn.joblib`.")
+        st.error("Model file not found. Put `model_knn.joblib` in the app folder.")
         st.stop()
     try:
         scaler = load(base / "scaler.joblib")
     except Exception:
-        st.error("Scaler file not found. Upload `scaler.joblib`.")
+        st.error("Scaler file not found. Put `scaler.joblib` in the app folder.")
         st.stop()
     try:
         df = pd.read_csv(base / "heart.csv")
@@ -39,74 +36,79 @@ model, scaler, df = load_artifacts()
 st.markdown(
     """
     <style>
-    /* Sidebar wider */
-    section[data-testid="stSidebar"] {
-        width: 420px !important;
-    }
+    /* Wider sidebar */
+    section[data-testid="stSidebar"] { width: 420px !important; }
 
-    /* Button style */
+    /* Make the primary button full width inside sidebar */
     div.stButton > button {
         width: 100%;
-        height: 50px;
-        font-size: 16px;
-        border-radius: 10px;
+        height: 46px;
+        font-size: 15px;
+        border-radius: 8px;
     }
 
     /* Scroll area for charts */
     .scroll-container {
-        max-height: 650px;
+        max-height: 720px;
         overflow-y: auto;
-        padding-right: 10px;
+        padding-right: 12px;
+    }
+
+    /* Small spacing adjustments for result box */
+    .result-box {
+        padding: 12px;
     }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-# ---------- Sidebar ----------
+# ---------- Sidebar: Patient Input (2 columns per row) ----------
 st.sidebar.header("Patient Input")
 
-# Grouped inputs: 2 per row
 c1, c2 = st.sidebar.columns(2)
 with c1:
-    age = st.number_input("Age", 1, 120, 50, step=1)
+    age = st.number_input("Age", min_value=1, max_value=120, value=50, step=1)
 with c2:
-    sex = st.selectbox("Sex (0=female, 1=male)", [0, 1], index=1)
+    sex = st.selectbox("Sex (0=female, 1=male)", options=[0, 1], index=1)
 
 c3, c4 = st.sidebar.columns(2)
 with c3:
-    cp = st.number_input("Chest pain type (cp)", 0, 3, 0, step=1)
+    cp = st.number_input("Chest pain type (cp)", min_value=0, max_value=3, value=0, step=1)
 with c4:
-    trestbps = st.number_input("Resting BP (trestbps)", 50, 250, 130, step=1)
+    trestbps = st.number_input("Resting BP (trestbps)", min_value=50, max_value=250, value=130, step=1)
 
 c5, c6 = st.sidebar.columns(2)
 with c5:
-    chol = st.number_input("Cholesterol (chol)", 100, 600, 250, step=1)
+    chol = st.number_input("Cholesterol (chol)", min_value=100, max_value=600, value=250, step=1)
 with c6:
-    fbs = st.selectbox("Fasting sugar >120 (fbs)", [0, 1], index=0)
+    fbs = st.selectbox("Fasting blood sugar >120 mg/dl (fbs)", options=[0, 1], index=0)
 
 c7, c8 = st.sidebar.columns(2)
 with c7:
-    restecg = st.number_input("Resting ECG", 0, 2, 0, step=1)
+    restecg = st.number_input("Resting ECG (restecg)", min_value=0, max_value=2, value=0, step=1)
 with c8:
-    thalach = st.number_input("Max HR (thalach)", 50, 250, 150, step=1)
+    thalach = st.number_input("Max heart rate (thalach)", min_value=50, max_value=250, value=150, step=1)
 
 c9, c10 = st.sidebar.columns(2)
 with c9:
-    exang = st.selectbox("Exercise angina (exang)", [0, 1], index=0)
+    exang = st.selectbox("Exercise induced angina (exang)", options=[0, 1], index=0)
 with c10:
     oldpeak = st.number_input("ST depression (oldpeak)", value=1.0, format="%.2f")
 
 c11, c12 = st.sidebar.columns(2)
 with c11:
-    slope = st.number_input("Slope (0–2)", 0, 2, 1, step=1)
+    slope = st.number_input("Slope (0–2)", min_value=0, max_value=2, value=1, step=1)
 with c12:
-    ca = st.number_input("Major vessels (ca)", 0, 4, 0, step=1)
+    ca = st.number_input("Major vessels (ca)", min_value=0, max_value=4, value=0, step=1)
 
-thal = st.sidebar.number_input("Thalassemia (thal)", 0, 3, 2, step=1)
+thal = st.sidebar.number_input("Thalassemia (thal)", min_value=0, max_value=3, value=2, step=1)
 
-# Predict button inside sidebar
-if st.sidebar.button("🔍 Predict"):
+st.sidebar.markdown("---")
+st.sidebar.caption("Tip: provide sensible ranges for reliable predictions")
+
+# ---------- Prediction logic placed in session state so result persists ----------
+def do_predict():
     x = np.array([[age, sex, cp, trestbps, chol, fbs, restecg,
                    thalach, exang, oldpeak, slope, ca, thal]])
     try:
@@ -115,41 +117,71 @@ if st.sidebar.button("🔍 Predict"):
         prob = None
         if hasattr(model, "predict_proba"):
             prob = float(model.predict_proba(x_scaled)[0][pred])
-        label = "Heart Disease" if pred == 1 else "No Heart Disease"
-        st.sidebar.success(f"**Result:** {label}")
-        if prob is not None:
-            st.sidebar.info(f"Confidence: {prob*100:.1f}%")
+        st.session_state["prediction"] = "Heart Disease" if pred == 1 else "No Heart Disease"
+        st.session_state["confidence"] = prob * 100 if prob is not None else None
     except Exception as e:
-        st.sidebar.error(f"Prediction error: {e}")
+        st.session_state["prediction_error"] = str(e)
 
-# ---------- Main ----------
+# Put button in sidebar and use on_click callback
+st.sidebar.button("🔍 Predict", on_click=do_predict)
+
+# ---------- Main layout ----------
 st.title("Heart Disease Predictor (Streamlit)")
 
-if df is not None:
-    st.markdown("### Exploratory Visuals (scrollable)")
+# Prepare layout: left = charts, right = result card
+main_col, result_col = st.columns([3, 1])
+
+# Result card on the right column (shows last prediction)
+with result_col:
+    st.markdown("### 🩺 Prediction Result")
+    if "prediction_error" in st.session_state:
+        st.error(f"Prediction error: {st.session_state.pop('prediction_error')}")
+    elif "prediction" in st.session_state:
+        pred_text = st.session_state["prediction"]
+        conf = st.session_state.get("confidence", None)
+        if pred_text == "Heart Disease":
+            st.error(f"**{pred_text}**", icon="⚠️")
+        else:
+            st.success(f"**{pred_text}**", icon="✅")
+        if conf is not None:
+            st.info(f"Confidence: **{conf:.1f}%**")
+        st.markdown("---")
+        st.caption("Feature order: age, sex, cp, trestbps, chol, fbs, restecg, thalach, exang, oldpeak, slope, ca, thal")
+    else:
+        st.info("No prediction yet. Enter inputs in the sidebar and click Predict.")
+
+# Charts in left/main column, placed inside a scrollable container
+with main_col:
+    st.markdown("## Exploratory Visuals (scrollable)")
     st.markdown('<div class="scroll-container">', unsafe_allow_html=True)
 
-    st.write("Distribution of heart disease cases")
-    fig1, ax1 = plt.subplots(figsize=(6, 4))
-    sns.countplot(x='target', data=df, palette='coolwarm', ax=ax1)
-    ax1.set_xlabel("Heart Disease (1=Yes, 0=No)")
-    st.pyplot(fig1)
+    if df is not None:
+        # Chart 1: distribution
+        st.write("Distribution of heart disease cases")
+        fig1, ax1 = plt.subplots(figsize=(6, 4))
+        sns.countplot(x="target", data=df, palette="coolwarm", ax=ax1)
+        ax1.set_xlabel("Heart Disease (1 = Yes, 0 = No)")
+        st.pyplot(fig1, clear_figure=True)
 
-    st.write("Age vs Cholesterol")
-    fig2, ax2 = plt.subplots(figsize=(7, 5))
-    sns.scatterplot(x='age', y='chol', hue='target', data=df, palette='coolwarm', ax=ax2)
-    st.pyplot(fig2)
+        # Chart 2: Age vs Cholesterol
+        st.write("Age vs Cholesterol")
+        fig2, ax2 = plt.subplots(figsize=(7, 4))
+        sns.scatterplot(x="age", y="chol", hue="target", data=df, palette="coolwarm", ax=ax2)
+        st.pyplot(fig2, clear_figure=True)
 
-    st.write("Cholesterol by Heart Disease (boxplot)")
-    fig3, ax3 = plt.subplots(figsize=(7, 5))
-    sns.boxplot(x='target', y='chol', data=df, palette='Set2', ax=ax3)
-    st.pyplot(fig3)
+        # Chart 3: Cholesterol boxplot
+        st.write("Cholesterol by Heart Disease (boxplot)")
+        fig3, ax3 = plt.subplots(figsize=(7, 4))
+        sns.boxplot(x="target", y="chol", data=df, palette="Set2", ax=ax3)
+        st.pyplot(fig3, clear_figure=True)
 
-    st.write("Resting blood pressure distribution")
-    fig4, ax4 = plt.subplots(figsize=(7, 5))
-    sns.histplot(df['trestbps'], bins=30, kde=True, ax=ax4)
-    st.pyplot(fig4)
+        # Chart 4: Resting BP distribution
+        st.write("Resting blood pressure distribution")
+        fig4, ax4 = plt.subplots(figsize=(7, 4))
+        sns.histplot(df["trestbps"], bins=30, kde=True, ax=ax4)
+        st.pyplot(fig4, clear_figure=True)
+
+    else:
+        st.info("Dataset `heart.csv` not found — upload it to enable visuals.")
 
     st.markdown('</div>', unsafe_allow_html=True)
-else:
-    st.info("Dataset `heart.csv` not found — upload it for visuals.")
