@@ -56,7 +56,6 @@ st.markdown(
     padding: 18px;
     box-shadow: 0 6px 20px rgba(0,0,0,0.28);
     color: #e6eef6;
-     min-height: 520px; 
 }
 
     .result-card h3 { margin: 0 0 8px 0; }
