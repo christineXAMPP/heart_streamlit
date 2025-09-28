@@ -150,38 +150,48 @@ st.title("Heart Disease Predictor (Streamlit)")
 left_spacer, main_col, right_col = st.columns([0.2, 2.6, 0.9])
 
 with right_col:
-    with st.container():
-        st.markdown('<div class="result-card">', unsafe_allow_html=True)
-
-        st.markdown("<h3>🩺 Prediction Result</h3>", unsafe_allow_html=True)
-        if "prediction_error" in st.session_state:
-            st.error(f"Prediction error: {st.session_state.pop('prediction_error')}")
-        elif "prediction" in st.session_state:
-            p = st.session_state["prediction"]
-            conf = st.session_state.get("confidence", None)
-            if p == "Heart Disease":
-                st.markdown(
-                    f'<div class="result-status"><strong style="color:#ffb4b4">⚠️ {p}</strong></div>',
-                    unsafe_allow_html=True,
-                )
-            else:
-                st.markdown(
-                    f'<div class="result-status"><strong style="color:#9be7a2">✅ {p}</strong></div>',
-                    unsafe_allow_html=True,
-                )
-            if conf is not None:
-                st.markdown(
-                    f'<div class="result-confidence">Confidence: <strong>{conf:.1f}%</strong></div>',
-                    unsafe_allow_html=True,
-                )
-            st.markdown("<hr>", unsafe_allow_html=True)
-            st.caption(
-                "Feature order: age, sex, cp, trestbps, chol, fbs, restecg, thalach, exang, oldpeak, slope, ca, thal"
-            )
+    if "prediction_error" in st.session_state:
+        content = f"""
+        <div class="result-card">
+            <h3>🩺 Prediction Result</h3>
+            <p style="color:#ff6b6b;"><strong>Prediction error:</strong> {st.session_state.pop('prediction_error')}</p>
+        </div>
+        """
+    elif "prediction" in st.session_state:
+        p = st.session_state["prediction"]
+        conf = st.session_state.get("confidence", None)
+        if p == "Heart Disease":
+            status_html = f'<div class="result-status"><strong style="color:#ffb4b4">⚠️ {p}</strong></div>'
         else:
-            st.info("No prediction yet. Use the sidebar inputs and click Predict.")
+            status_html = f'<div class="result-status"><strong style="color:#9be7a2">✅ {p}</strong></div>'
 
-        st.markdown('</div>', unsafe_allow_html=True)
+        conf_html = (
+            f'<div class="result-confidence">Confidence: <strong>{conf:.1f}%</strong></div>'
+            if conf is not None else ""
+        )
+
+        content = f"""
+        <div class="result-card">
+            <h3>🩺 Prediction Result</h3>
+            {status_html}
+            {conf_html}
+            <hr>
+            <p style="font-size:0.85rem; opacity:0.7;">
+            Feature order: age, sex, cp, trestbps, chol, fbs, restecg,
+            thalach, exang, oldpeak, slope, ca, thal
+            </p>
+        </div>
+        """
+    else:
+        content = """
+        <div class="result-card">
+            <h3>🩺 Prediction Result</h3>
+            <p>No prediction yet. Use the sidebar inputs and click Predict.</p>
+        </div>
+        """
+
+    st.markdown(content, unsafe_allow_html=True)
+
 
 
 # Main: center charts in a 2x2 grid with margins
